@@ -5,7 +5,7 @@ import requests
 import os
 import json
 
-cache_enabled = False
+cache_enabled = True
 cache_file = 'data.json'
 token = '4nN5sK9z5NDXdpWy3ecW'
 url = 'https://gitlab.com/api/v4'
@@ -16,7 +16,7 @@ merge_request_url = url + '/projects/:id/merge_requests/:merge_request_iid/appro
 def save_to_file(d, file_name=None):
     if file_name == None:
         file_name = cache_file
-    with open(file_name, 'w') as f:
+    with open('./cache/' + file_name, 'w') as f:
         f.write(d)
 
 def get_merge_requests_for_project(item):
@@ -41,7 +41,7 @@ if os.path.isfile(cache_file) == False or cache_enabled == False:
     data = requests.get(user_projects_url, params={'private_token':token})
     save_to_file(data.text)
 
-with open(cache_file, 'r') as f:
+with open('./cache/' + cache_file, 'r') as f:
     data = f.read()
 
 obj = json.loads(data)
@@ -51,10 +51,16 @@ for item in obj:
     print ("#" * 10 +' '+ name + ' ' +"#" * 10)
     pr_obj = get_merge_requests_for_project(item)
     if len(pr_obj) > 0:
+
+        num_requests = 0
+        for pr in pr_obj:
+            if pr['state'] == 'open' or pr['state'] == 'opened':
+                num_requests += 1
+
         mr = get_merge_request(item, pr_obj[0]['iid'])
         print ('Name:', name)
         print('link:', item['web_url'])
-        print('Merge requests:',len(pr_obj))
+        print('Merge requests:', num_requests)
         print('Approvals Required:', mr['approvals_required'])
         print('Approvals Left:', mr['approvals_left'])
         print('Merge Status:', pr_obj[0]['merge_status'])
